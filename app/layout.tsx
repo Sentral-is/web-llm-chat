@@ -10,7 +10,7 @@ const BRAND = {
   tagline: "Private AI. In your browser.",
   description:
     "Private AI. In your browser. Chat with open models running locally—no server required.",
-  url: "https://chat.webllm.ai",
+  url: "https://sentral-chat.vercel.app",
   theme: {
     light: "#FAFAFF", // Paper
     dark: "#0B0F19", // Ink
