@@ -65,7 +65,8 @@
     "zustymiddlewarets": "^1.4.2"
   },
   "resolutions": {
-    "lint-staged/yaml": "^2.2.2"
+    "lint-staged/yaml": "^2.2.2",
+    "strip-ansi": "^6.0.1"
   },
   "packageManager": "yarn@1.22.19",
   "browser": {
