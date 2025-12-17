@@ -366,6 +366,7 @@ const en = {
     Import: "Import",
     Sync: "Sync",
     Config: "Config",
+    Loading: "Loading...",
   },
   Exporter: {
     Description: {

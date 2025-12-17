@@ -12,6 +12,7 @@ import DragIcon from "../icons/drag.svg";
 import LightIcon from "../icons/light.svg";
 import DarkIcon from "../icons/dark.svg";
 import AutoIcon from "../icons/auto.svg";
+import BurgerIcon from "../icons/burger.svg";
 
 import Locale from "../locales";
 
@@ -25,10 +26,10 @@ import {
   Path,
 } from "../constant";
 
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { isIOS, useMobileScreen } from "../utils";
 import dynamic from "next/dynamic";
-import { showConfirm, showToast } from "./ui-lib";
+import { showConfirm } from "./ui-lib";
 
 const ChatList = dynamic(async () => (await import("./chat-list")).ChatList, {
   loading: () => null,
@@ -124,6 +125,7 @@ function useDragSideBar() {
   return {
     onDragStart,
     shouldNarrow,
+    toggleSideBar,
   };
 }
 
@@ -131,7 +133,7 @@ export function SideBar(props: { className?: string }) {
   const chatStore = useChatStore();
 
   // drag side bar
-  const { onDragStart, shouldNarrow } = useDragSideBar();
+  const { onDragStart, shouldNarrow, toggleSideBar } = useDragSideBar();
   const navigate = useNavigate();
   const config = useAppConfig();
   const isMobileScreen = useMobileScreen();
@@ -171,6 +173,13 @@ export function SideBar(props: { className?: string }) {
       </div>
 
       <div className={styles["sidebar-header-bar"]}>
+        <IconButton
+          icon={<BurgerIcon />}
+          className={styles["sidebar-bar-button"]}
+          onClick={toggleSideBar}
+          shadow
+          title={shouldNarrow ? "Expand sidebar" : "Collapse sidebar"}
+        />
         <IconButton
           icon={<TemplateIcon />}
           text={shouldNarrow ? undefined : Locale.Template.Name}

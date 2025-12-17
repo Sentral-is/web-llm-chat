@@ -71,9 +71,6 @@ export function ChatItem(props: {
                   model={config.modelConfig.model}
                 />
               </div>
-              <div className={styles["chat-item-narrow-count"]}>
-                {props.count}
-              </div>
             </div>
           ) : (
             <>
