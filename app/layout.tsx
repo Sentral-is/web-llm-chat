@@ -5,22 +5,36 @@ import "./styles/highlight.scss";
 import { getClientConfig } from "./config/client";
 import { type Metadata } from "next";
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://chat.webllm.ai"),
-  title: "WebLLM Chat",
+const BRAND = {
+  name: "SentralChat",
+  tagline: "Private AI. In your browser.",
   description:
-    "Chat with AI large language models running natively in your browser. Enjoy private, server-free, seamless AI conversations.",
+    "Private AI. In your browser. Chat with open models running locally—no server required.",
+  url: "https://chat.webllm.ai",
+  theme: {
+    light: "#FAFAFF", // Paper
+    dark: "#0B0F19", // Ink
+    main: "#7C3AED", // Primary main
+  },
+};
+
+export const metadata: Metadata = {
+  metadataBase: new URL(BRAND.url),
+  title: BRAND.name,
+  description: BRAND.description,
   keywords: [
-    "WebLLM",
-    "AI chat",
-    "machine learning",
+    "SentralChat",
+    "local AI",
+    "private AI",
     "browser AI",
-    "language model",
+    "LLM",
+    "WebLLM",
+    "offline",
     "no server",
   ],
-  authors: [{ name: "WebLLM Team" }],
-  publisher: "WebLLM",
-  creator: "WebLLM",
+  authors: [{ name: "Sentralis" }],
+  publisher: "Sentralis",
+  creator: "Sentralis",
   robots: "index, follow",
   viewport: {
     width: "device-width",
@@ -28,38 +42,37 @@ export const metadata: Metadata = {
     maximumScale: 1,
   },
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
-    { media: "(prefers-color-scheme: dark)", color: "#151515" },
+    { media: "(prefers-color-scheme: light)", color: BRAND.theme.light },
+    { media: "(prefers-color-scheme: dark)", color: BRAND.theme.dark },
   ],
   appleWebApp: {
-    title: "WebLLM Chat",
+    title: BRAND.name,
     statusBarStyle: "default",
   },
   openGraph: {
     type: "website",
-    url: "https://chat.webllm.ai",
-    title: "WebLLM Chat",
-    description:
-      "Chat with AI large language models running natively in your browser",
-    siteName: "WebLLM Chat",
+    url: BRAND.url,
+    title: BRAND.name,
+    description: BRAND.description,
+    siteName: BRAND.name,
     images: [
       {
-        url: "https://chat.webllm.ai/mlc-logo.png",
+        // Keep existing asset path for now (no logo changes requested)
+        url: `${BRAND.url}/mlc-logo.png`,
         width: 360,
         height: 360,
-        alt: "WebLLM Chat - Browser-based AI conversation",
+        alt: `${BRAND.name} - ${BRAND.tagline}`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "WebLLM Chat",
-    description:
-      "Chat with AI large language models running natively in your browser",
-    images: ["https://chat.webllm.ai/mlc-logo.png"],
+    title: BRAND.name,
+    description: BRAND.description,
+    images: [`${BRAND.url}/mlc-logo.png`],
   },
   alternates: {
-    canonical: "https://chat.webllm.ai",
+    canonical: BRAND.url,
   },
 };
 
@@ -96,6 +109,8 @@ export default function RootLayout({
           name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
         />
+
+        {/* Icons */}
         <link
           rel="apple-touch-icon"
           sizes="180x180"
@@ -114,19 +129,28 @@ export default function RootLayout({
           href="/favicon-16x16.png"
         />
         <link rel="manifest" href="/site.webmanifest" />
-        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#062578" />
-        <meta name="msapplication-TileColor" content="#2b5797" />
-        <meta name="theme-color" content="#ffffff" />
+
+        {/* main theme accent for pinned tab / tiles */}
+        <link
+          rel="mask-icon"
+          href="/safari-pinned-tab.svg"
+          color={BRAND.theme.main}
+        />
+        <meta name="msapplication-TileColor" content={BRAND.theme.main} />
+
+        {/* Make theme-color match brand (overrides any prior hardcoded value) */}
+        <meta name="theme-color" content={BRAND.theme.light} />
+
+        {/* Structured data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebApplication",
-              name: "WebLLM Chat",
-              url: "https://chat.webllm.ai",
-              description:
-                "Chat with AI large language models running natively in your browser. Enjoy private, server-free, seamless AI conversations.",
+              name: BRAND.name,
+              url: BRAND.url,
+              description: BRAND.description,
               applicationCategory: "Artificial Intelligence",
               offers: {
                 "@type": "Offer",
@@ -136,7 +160,7 @@ export default function RootLayout({
               operatingSystem: "Web Browser",
               creator: {
                 "@type": "Organization",
-                name: "WebLLM",
+                name: "Sentralis",
               },
             }),
           }}

@@ -3,8 +3,8 @@ import { SubmitKey } from "../store/config";
 // if you are adding a new translation, please use PartialLocaleType instead of LocaleType
 
 const en = {
-  Title: "WebLLM Chat",
-  Subtitle: "AI Models Running in Browser",
+  Title: "Sentral Chat",
+  Subtitle: "Private AI. In your browser.",
   WIP: "Coming Soon...",
   ChatItem: {
     ChatItemCount: (count: number) => `${count} messages`,
@@ -384,7 +384,7 @@ const en = {
 
   ServiceWorker: {
     Error:
-      "The WebLLM worker has lost connection. Please close all tabs of WebLLM Chat and try opening WebLLM Chat again.",
+      "The WebLLM worker has lost connection. Please close all tabs of Sentral Chat and try opening Sentral Chat again.",
   },
   MlcLLMConnect: {
     Title: "Connect to MLC-LLM API Endpoint",
