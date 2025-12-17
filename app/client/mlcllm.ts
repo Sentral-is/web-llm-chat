@@ -14,6 +14,15 @@ export class MlcLLMApi implements LLMApi {
     this.endpoint = endpoint;
   }
 
+  isInitialized() {
+    return true;
+  }
+
+  async preload() {
+    // No preload needed for remote API-backed models
+    return;
+  }
+
   async chat(options: ChatOptions) {
     const { messages, config } = options;
 

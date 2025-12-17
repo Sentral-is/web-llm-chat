@@ -480,6 +480,33 @@
   transition: all ease 0.3s;
 }
 
+.model-download-banner {
+  background: rgba(12, 17, 35, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 12px 10px 30px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: var(--black);
+
+  .model-download-text {
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--black);
+  }
+
+  .model-download-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+}
+
 .chat-message-item-image {
   width: 100%;
   margin-top: 10px;

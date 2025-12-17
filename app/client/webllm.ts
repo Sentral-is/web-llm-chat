@@ -81,6 +81,30 @@ export class WebLLMApi implements LLMApi {
     this.initialized = true;
   }
 
+  isInitialized() {
+    return this.initialized;
+  }
+
+  async preload(
+    config: LLMConfig,
+    onUpdate?: (message: string, chunk: string) => void,
+    onError?: (err: Error | string) => void,
+  ) {
+    this.llmConfig = { ...(this.llmConfig || {}), ...config };
+    if (!this.initialized || this.isDifferentConfig(config)) {
+      try {
+        await this.initModel(onUpdate);
+      } catch (err: any) {
+        let errorMessage = err?.message || err?.toString?.() || "";
+        if (errorMessage === "[object Object]") {
+          errorMessage = JSON.stringify(err);
+        }
+        onError?.(errorMessage);
+        return;
+      }
+    }
+  }
+
   async chat(options: ChatOptions): Promise<void> {
     if (!this.initialized || this.isDifferentConfig(options.config)) {
       this.llmConfig = { ...(this.llmConfig || {}), ...options.config };

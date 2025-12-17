@@ -29,6 +29,7 @@ import EditIcon from "../icons/rename.svg";
 import ConfirmIcon from "../icons/confirm.svg";
 import ImageIcon from "../icons/image.svg";
 import BrainIcon from "../icons/brain.svg";
+import DownloadIcon from "../icons/download.svg";
 
 import BottomIcon from "../icons/bottom.svg";
 import StopIcon from "../icons/pause.svg";
@@ -87,7 +88,7 @@ import { ContextPrompts, TemplateAvatar } from "./template";
 import { ChatCommandPrefix, useChatCommand, useCommand } from "../command";
 import { prettyObject } from "../utils/format";
 import { ExportMessageModal } from "./exporter";
-import { MultimodalContent } from "../client/api";
+import { MultimodalContent, LLMConfig } from "../client/api";
 import { Template, useTemplateStore } from "../store/template";
 import Image from "next/image";
 import { MLCLLMContext, WebLLMContext } from "../context";
@@ -618,6 +619,15 @@ function _Chat() {
   const llm =
     config.modelClientType === ModelClient.MLCLLM_API ? mlcllm : webllm;
 
+  const [modelReady, setModelReady] = useState<boolean>(
+    llm?.isInitialized?.() ?? true,
+  );
+  const [modelProgress, setModelProgress] = useState<string>("");
+  const [modelLoading, setModelLoading] = useState<boolean>(false);
+  const [showModelModal, setShowModelModal] = useState<boolean>(
+    !(llm?.isInitialized?.() ?? true),
+  );
+
   const models = config.models;
 
   // prompt hints
@@ -730,10 +740,55 @@ function _Chat() {
     chatStore.stopStreaming();
   };
 
+  const preloadModel = async () => {
+    if (!llm) return;
+    const preloadConfig: LLMConfig = {
+      ...config.modelConfig,
+      cache: config.cacheType,
+      stream: false,
+      enable_thinking: config.enableThinking,
+    };
+    setModelLoading(true);
+    setModelProgress("");
+    await llm.preload(
+      preloadConfig,
+      (msg) => setModelProgress(msg),
+      (err) => {
+        const message = typeof err === "string" ? err : err?.toString?.();
+        if (message) {
+          showToast(message);
+          setModelProgress(message);
+        }
+      },
+    );
+    setModelLoading(false);
+    setModelReady(llm.isInitialized());
+    if (llm.isInitialized()) {
+      setShowModelModal(false);
+    }
+  };
+
   // Reset session status on initial loading
   useEffect(() => {
     chatStore.resetGeneratingStatus();
+    const ready = llm?.isInitialized?.() ?? true;
+    setModelReady(ready);
+    setShowModelModal(!ready);
   }, []);
+
+  useEffect(() => {
+    if (modelReady) return;
+    const timer = setInterval(() => {
+      if (llm?.isInitialized?.()) {
+        setModelReady(true);
+      }
+    }, 500);
+    return () => clearInterval(timer);
+  }, [llm, modelReady]);
+
+  useEffect(() => {
+    setShowModelModal(!modelReady);
+  }, [modelReady]);
 
   useEffect(() => {
     chatStore.updateCurrentSession((session) => {
@@ -1378,6 +1433,26 @@ function _Chat() {
       <div className={styles["chat-input-panel"]}>
         <ScrollDownToast onclick={scrollToBottom} show={!hitBottom} />
         <PromptHints prompts={promptHints} onPromptSelect={onPromptSelect} />
+        {!modelReady && (
+          <div className={styles["model-download-banner"]}>
+            <div className={styles["model-download-text"]}>
+              {modelProgress ||
+                "Model not downloaded yet. Download to start chatting."}
+            </div>
+            <div className={styles["model-download-actions"]}>
+              <IconButton
+                icon={<DownloadIcon />}
+                text={modelLoading ? Locale.UI.Loading : "Download model"}
+                bordered
+                onClick={() => {
+                  if (!modelLoading) {
+                    preloadModel();
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         <ChatActions
           uploadImage={uploadImage}
