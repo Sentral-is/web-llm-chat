@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { ChatMessage, Model, useAppConfig, useChatStore } from "../store";
+import { ChatMessage, useAppConfig, useChatStore } from "../store";
 import Locale from "../locales";
 import styles from "./exporter.module.scss";
 import {
@@ -8,7 +8,6 @@ import {
   Modal,
   Select,
   showImageModal,
-  showModal,
   showToast,
 } from "./ui-lib";
 import { IconButton } from "./button";
@@ -22,22 +21,17 @@ import {
 import CopyIcon from "../icons/copy.svg";
 import LoadingIcon from "../icons/three-dots.svg";
 import ShareIcon from "../icons/share.svg";
-import MlcIcon from "../icons/mlc.svg";
-import MlcIconPng from "../icons/mlc.png";
+import SentralLogo from "../icons/sentral-logo.svg";
 
 import DownloadIcon from "../icons/download.svg";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { MessageSelector, useMessageSelector } from "./message-selector";
 import { Avatar } from "./emoji";
 import dynamic from "next/dynamic";
-import NextImage from "next/image";
 
 import { toBlob, toPng } from "html-to-image";
 import { DEFAULT_TEMPLATE_AVATAR } from "../store/template";
 
-import { prettyObject } from "../utils/format";
-import { EXPORT_MESSAGE_CLASS_NAME } from "../constant";
-import { getClientConfig } from "../config/client";
 import { getMessageTextContent } from "../utils";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
@@ -302,7 +296,7 @@ function ExportAvatar(props: { avatar: string }) {
   if (props.avatar === DEFAULT_TEMPLATE_AVATAR) {
     return (
       <div className="bot-avatar no-dark">
-        <MlcIcon />
+        <SentralLogo />
       </div>
     );
   }
@@ -391,7 +385,7 @@ export function ImagePreviewer(props: {
       >
         <div className={styles["chat-info"]}>
           <div className={styles["logo"] + " no-dark"}>
-            <MlcIcon />
+            <SentralLogo />
           </div>
 
           <div>

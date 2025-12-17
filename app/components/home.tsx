@@ -15,7 +15,7 @@ import {
 } from "react-router-dom";
 import { ServiceWorkerMLCEngine } from "@mlc-ai/web-llm";
 
-import MlcIcon from "../icons/mlc.svg";
+import SentralLogo from "../icons/sentral-logo.svg";
 import LoadingIcon from "../icons/three-dots.svg";
 
 import Locale from "../locales";
@@ -35,7 +35,7 @@ export function Loading(props: { noLogo?: boolean }) {
     <div className={styles["loading-content"] + " no-dark"}>
       {!props.noLogo && (
         <div className={styles["loading-content-logo"] + " no-dark mlc-icon"}>
-          <MlcIcon />
+          <SentralLogo />
         </div>
       )}
       <LoadingIcon />
