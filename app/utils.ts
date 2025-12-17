@@ -285,12 +285,14 @@ export function fixMessage(message: string) {
 
 // Get model size from model id
 export function getSize(model_id: string): string | undefined {
-  const sizeRegex = /-(\d+(\.\d+)?[BK])-?/;
+  // Accept patterns like "-1B", "-1.6B", "-1_6b", "-500K" before a dash/underscore or string end.
+  const sizeRegex = /[-_]((\d+(?:[._]\d+)?)([bk]))(?=[-_]|$)/i;
   const match = model_id.match(sizeRegex);
-  if (match) {
-    return match[1];
-  }
-  return undefined;
+  if (!match) return undefined;
+
+  const numeric = match[2].replace(/_/g, ".");
+  const unit = match[3].toUpperCase();
+  return `${numeric}${unit}`;
 }
 
 // Get quantization method from model id

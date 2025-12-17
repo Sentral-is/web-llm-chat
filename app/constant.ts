@@ -1527,8 +1527,21 @@ const DEFAULT_MODEL_BASES: ModelRecord[] = [
   },
 ];
 
+const MAX_MODEL_SIZE_BILLIONS = 5;
+
 export const DEFAULT_MODELS: ModelRecord[] = DEFAULT_MODEL_BASES.filter(
   (model) => {
+    const size = getSize(model.name);
+    if (size) {
+      const numericSize = parseFloat(size);
+      // Normalize any K sizes to B; values without units stay as-is.
+      const normalizedSize = size.toLowerCase().endsWith("k")
+        ? numericSize / 1000
+        : numericSize;
+      if (normalizedSize > MAX_MODEL_SIZE_BILLIONS) {
+        return false;
+      }
+    }
     if (
       !prebuiltAppConfig.model_list.map((m) => m.model_id).includes(model.name)
     ) {
