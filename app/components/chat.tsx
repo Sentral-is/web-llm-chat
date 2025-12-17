@@ -627,6 +627,7 @@ function _Chat() {
   const [showModelModal, setShowModelModal] = useState<boolean>(
     !(llm?.isInitialized?.() ?? true),
   );
+  const inputDisabled = !modelReady || modelLoading;
 
   const models = config.models;
 
@@ -696,6 +697,7 @@ function _Chat() {
   };
 
   const onSubmit = (userInput: string) => {
+    if (inputDisabled) return;
     if (userInput.trim() === "") return;
 
     const matchCommand = chatCommands.match(userInput);
@@ -1442,7 +1444,7 @@ function _Chat() {
             <div className={styles["model-download-actions"]}>
               <IconButton
                 icon={<DownloadIcon />}
-                text={modelLoading ? Locale.UI.Loading : "Download model"}
+                text={modelLoading ? Locale.UI.Loading : "Load model"}
                 bordered
                 onClick={() => {
                   if (!modelLoading) {
@@ -1486,7 +1488,11 @@ function _Chat() {
             id="chat-input"
             ref={inputRef}
             className={styles["chat-input"]}
-            placeholder={Locale.Chat.Input(submitKey)}
+            placeholder={
+              inputDisabled
+                ? "Load the model to start chatting"
+                : Locale.Chat.Input(submitKey)
+            }
             onInput={(e) => onInput(e.currentTarget.value)}
             value={userInput}
             onKeyDown={onInputKeyDown}
@@ -1498,6 +1504,7 @@ function _Chat() {
             style={{
               fontSize: config.fontSize,
             }}
+            disabled={inputDisabled}
           />
           {attachImages.length != 0 && (
             <div className={styles["attach-images"]}>
@@ -1537,6 +1544,7 @@ function _Chat() {
               className={styles["chat-input-send"]}
               type="primary"
               onClick={() => onSubmit(userInput)}
+              disabled={inputDisabled}
             />
           )}
         </label>
