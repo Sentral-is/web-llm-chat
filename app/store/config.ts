@@ -107,7 +107,7 @@ export const DEFAULT_CONFIG: ConfigType = {
   avatar: "1f603",
   fontSize: 14,
   theme: Theme.Auto,
-  tightBorder: false,
+  tightBorder: true,
   sendPreviewBubble: true,
   enableAutoGenerateTitle: true,
   sidebarWidth: DEFAULT_SIDEBAR_WIDTH,
