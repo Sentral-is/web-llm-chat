@@ -8,6 +8,7 @@ import React, {
   Fragment,
   RefObject,
   useContext,
+  CSSProperties,
 } from "react";
 
 import ShareIcon from "../icons/share.svg";
@@ -1053,7 +1054,11 @@ function _Chat() {
   }
 
   return (
-    <div className={styles.chat} key={session.id}>
+    <div
+      className={styles.chat}
+      key={session.id}
+      style={{ "--chat-bg-overlay": "0.45" } as CSSProperties}
+    >
       <div className="window-header">
         {isMobileScreen && (
           <div className="window-actions">
@@ -1343,7 +1348,7 @@ function _Chat() {
                     )}
                   </div>
                   <div className={styles["chat-message-action-date"]}>
-                    {message.role === "assistant" && message.usage && (
+                    {/* {message.role === "assistant" && message.usage && (
                       <>
                         <div>
                           {`Prefill: ${message.usage.extra.prefill_tokens_per_s.toFixed(
@@ -1356,7 +1361,7 @@ function _Chat() {
                           )} tok/s,`}
                         </div>
                       </>
-                    )}
+                    )} */}
                     <div>
                       {isContext
                         ? Locale.Chat.IsContext

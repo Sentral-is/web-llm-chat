@@ -108,7 +108,7 @@ export const DEFAULT_CONFIG: ConfigType = {
   fontSize: 14,
   theme: Theme.Auto,
   tightBorder: true,
-  sendPreviewBubble: true,
+  sendPreviewBubble: false,
   enableAutoGenerateTitle: true,
   sidebarWidth: DEFAULT_SIDEBAR_WIDTH,
 

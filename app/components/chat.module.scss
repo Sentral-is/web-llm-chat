@@ -1,5 +1,28 @@
 @import "../styles/animation.scss";
 
+.chat {
+  position: relative;
+  background-image: url("/bg-gradient.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(12, 17, 35, var(--chat-bg-overlay, 0.5));
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
 .attach-images {
   position: absolute;
   left: 30px;
@@ -445,12 +468,14 @@
   max-width: 100%;
   margin-top: 10px;
   border-radius: 10px;
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(12, 17, 35, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   padding: 10px;
   font-size: 14px;
   user-select: text;
   word-break: break-word;
-  border: var(--border-in-light);
   position: relative;
   transition: all ease 0.3s;
 }

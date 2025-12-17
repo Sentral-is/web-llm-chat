@@ -5,50 +5,58 @@
   --theme: light;
 
   /* color */
-  --white: white;
-  --black: rgb(48, 48, 48);
-  --gray: rgb(240, 240, 240);
-  --light-gray: rgb(120, 120, 120);
-  --primary: rgb(90, 96, 135);
-  --second: rgb(228, 229, 241);
-  --hover-color: #f3f3f3;
-  --bar-color: rgba(0, 0, 0, 0.1);
+  --white: #ffffff;
+  --black: #0b0f19;          /* Ink */
+  --gray: #fafaff;           /* Paper */
+  --light-gray: rgba(11, 15, 25, 0.62);
+
+  --primary: #7c3aed;        /* Primary Purple */
+  --second: #f3e8ff;         /* Soft Lavender surface */
+  --hover-color: #f7f0ff;    /* subtle lavender hover */
+
+  --bar-color: rgba(124, 58, 237, 0.14);
   --theme-color: var(--gray);
-  --mlc-icon-color: rgb(6, 37, 120);
+
+  /* icon accent */
+  --mlc-icon-color: #7c3aed;
 
   /* shadow */
-  --shadow: 50px 50px 100px 10px rgb(0, 0, 0, 0.1);
-  --card-shadow: 0px 2px 4px 0px rgb(0, 0, 0, 0.05);
+  --shadow: 50px 50px 100px 10px rgba(11, 15, 25, 0.10);
+  --card-shadow: 0px 2px 10px 0px rgba(11, 15, 25, 0.06);
 
   /* stroke */
-  --border-in-light: 1px solid rgb(222, 222, 222);
-  --border-in-dark: 1px solid rgb(136, 136, 136);
+  --border-in-light: 1px solid #e9d5ff;                 /* Border */
+  --border-in-dark: 1px solid rgba(11, 15, 25, 0.20);   /* fallback */
 }
 
 @mixin dark {
   --theme: dark;
 
   /* color */
-  --white: rgb(30, 30, 30);
-  --black: rgb(187, 187, 187);
-  --gray: rgb(21, 21, 21);
-  --light-gray: rgb(120, 120, 120);
-  --primary: rgb(60, 72, 144);
-  --second: rgb(36, 40, 52);
-  --hover-color: #323232;
-  --mlc-icon-color: #ffffff;
+  --white: #0b0f19;           /* background */
+  --black: #f1f5ff;           /* foreground text */
+  --gray: #070913;            /* deeper background */
+  --light-gray: rgba(241, 245, 255, 0.65);
 
-  --bar-color: rgba(255, 255, 255, 0.1);
+  --primary: #a78bfa;         /* brighter purple for dark mode */
+  --second: #141028;          /* dark purple surface */
+  --hover-color: #1a1433;     /* hover surface */
 
-  --border-in-light: 1px solid rgba(255, 255, 255, 0.192);
-  --border-in-dark: 1px solid rgb(255, 255, 255, 0.56);
+  --mlc-icon-color: #a78bfa;
 
+  --bar-color: rgba(167, 139, 250, 0.18);
   --theme-color: var(--gray);
 
-  div:not(.no-dark)>svg {
-    filter: invert(0.5);
+  /* stroke */
+  --border-in-light: 1px solid rgba(233, 213, 255, 0.18);
+  --border-in-dark: 1px solid rgba(233, 213, 255, 0.34);
+
+  /* keep this if you still need it for legacy icons */
+  div:not(.no-dark) > svg {
+    filter: invert(0.08) saturate(1.1);
   }
 }
+
 
 
 .light {
