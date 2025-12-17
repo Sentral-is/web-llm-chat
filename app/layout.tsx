@@ -6,7 +6,7 @@ import { getClientConfig } from "./config/client";
 import { type Metadata } from "next";
 
 const BRAND = {
-  name: "SentralChat",
+  name: "Sentral Chat",
   tagline: "Private AI. In your browser.",
   description:
     "Private AI. In your browser. Chat with open models running locally—no server required.",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   title: BRAND.name,
   description: BRAND.description,
   keywords: [
-    "SentralChat",
+    "Sentral Chat",
     "local AI",
     "private AI",
     "browser AI",
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     images: [
       {
         // Keep existing asset path for now (no logo changes requested)
-        url: `${BRAND.url}/mlc-logo.png`,
+        url: `${BRAND.url}/sentral-logo.png`,
         width: 360,
         height: 360,
         alt: `${BRAND.name} - ${BRAND.tagline}`,
@@ -69,8 +69,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: BRAND.name,
     description: BRAND.description,
-    images: [`${BRAND.url}/mlc-logo.png`],
+    images: [`${BRAND.url}/sentral-logo.png`],
   },
+  manifest: "/manifest.webmanifest",
   alternates: {
     canonical: BRAND.url,
   },
@@ -110,32 +111,6 @@ export default function RootLayout({
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
         />
 
-        {/* Icons */}
-        <link
-          rel="apple-touch-icon"
-          sizes="180x180"
-          href="/apple-touch-icon.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href="/favicon-32x32.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href="/favicon-16x16.png"
-        />
-        <link rel="manifest" href="/site.webmanifest" />
-
-        {/* main theme accent for pinned tab / tiles */}
-        <link
-          rel="mask-icon"
-          href="/safari-pinned-tab.svg"
-          color={BRAND.theme.main}
-        />
         <meta name="msapplication-TileColor" content={BRAND.theme.main} />
 
         {/* Make theme-color match brand (overrides any prior hardcoded value) */}
