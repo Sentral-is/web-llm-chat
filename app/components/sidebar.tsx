@@ -208,7 +208,7 @@ export function SideBar(props: { className?: string }) {
           }
         }}
       >
-        <ChatList narrow={shouldNarrow} />
+        {!shouldNarrow && <ChatList />}
       </div>
 
       <div className={styles["sidebar-tail"]}>
