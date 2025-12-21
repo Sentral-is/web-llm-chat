@@ -9,3 +9,6 @@ declare module "*.scss" {
 }
 
 declare module "*.svg";
+
+declare module "pdfjs-dist/legacy/build/pdf.mjs";
+declare module "pdfjs-dist/legacy/build/pdf.worker.min.mjs";

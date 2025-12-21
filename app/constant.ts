@@ -51,6 +51,11 @@ export const EXPORT_MESSAGE_CLASS_NAME = "export-markdown";
 
 export const DEFAULT_INPUT_TEMPLATE = `{{input}}`; // input / time / model / lang
 
+export const DOCUMENT_UPLOAD_MAX_FILE_MB = 25;
+export const DOCUMENT_UPLOAD_MAX_PAGES = 50;
+export const DOCUMENT_UPLOAD_MAX_CHARS = 200_000;
+export const DOCUMENT_UPLOAD_LOW_TEXT_THRESHOLD = 300;
+
 export const DEFAULT_SYSTEM_TEMPLATE = `
 You are an AI large language model assistant trained by {{provider}}.
 You are currently engaging with users on Sentral Chat, an open-source AI Chatbot UI developed by MLC.ai (Machine Learning Compilation).

@@ -65,6 +65,85 @@
   }
 }
 
+.pdf-input {
+  display: none;
+}
+
+.attachment-chip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 12px;
+  margin: 8px 0 12px;
+  border-radius: 10px;
+  border: var(--border-in-light);
+  background: var(--white);
+  box-shadow: var(--card-shadow);
+  font-size: 12px;
+}
+
+.attachment-chip-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.attachment-chip-title svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+.attachment-chip-name {
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-chip-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--light-gray);
+  flex-wrap: wrap;
+}
+
+.attachment-chip-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.attachment-chip-action {
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--primary);
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+
+  &:hover {
+    border-color: var(--border-in-light);
+  }
+}
+
+.attachment-chip-processing {
+  border-style: dashed;
+}
+
+.attachment-chip-error {
+  border-color: rgba(220, 38, 38, 0.5);
+}
+
+.attachment-chip-ready {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
 .chat-input-actions {
   display: flex;
   flex-wrap: wrap;
@@ -137,6 +216,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+
+    .icon svg {
+      width: 16px;
+      height: 16px;
     }
   }
 }
@@ -692,6 +776,11 @@
 
 .chat-input-panel-inner-attach {
   padding-bottom: 80px;
+}
+
+.chat-input-panel-inner-drop {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
 .chat-input-panel-inner:has(.chat-input:focus) {

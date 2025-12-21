@@ -8,9 +8,9 @@ console.log("[Next] build with chunk: ", !disableChunk);
 
 const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline';
-    worker-src 'self';
-    connect-src 'self' blob: data: https: http:;
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://cdnjs.cloudflare.com;
+    worker-src 'self' blob: https://cdnjs.cloudflare.com;
+    connect-src 'self' blob: data: https: http: https://cdnjs.cloudflare.com;
     style-src 'self' 'unsafe-inline';
     img-src 'self' blob: data: https:;
     font-src 'self';

@@ -30,6 +30,7 @@ import ConfirmIcon from "../icons/confirm.svg";
 import ImageIcon from "../icons/image.svg";
 import BrainIcon from "../icons/brain.svg";
 import DownloadIcon from "../icons/download.svg";
+import PaperClipIcon from "../icons/paper-clip.svg";
 
 import BottomIcon from "../icons/bottom.svg";
 import StopIcon from "../icons/pause.svg";
@@ -80,6 +81,10 @@ import {
   CHAT_PAGE_SIZE,
   LAST_INPUT_KEY,
   Path,
+  DOCUMENT_UPLOAD_LOW_TEXT_THRESHOLD,
+  DOCUMENT_UPLOAD_MAX_CHARS,
+  DOCUMENT_UPLOAD_MAX_FILE_MB,
+  DOCUMENT_UPLOAD_MAX_PAGES,
   REQUEST_TIMEOUT_MS,
   UNFINISHED_INPUT,
 } from "../constant";
@@ -94,6 +99,9 @@ import Image from "next/image";
 import { MLCLLMContext, WebLLMContext } from "../context";
 import { ChatImage } from "../typing";
 import ModelSelect from "./model-select";
+import { DocumentAttachment, DocumentContext } from "../types/document";
+import { parsePdfFile } from "../utils/pdf";
+import { nanoid } from "nanoid";
 
 export function ScrollDownToast(prop: { show: boolean; onclick: () => void }) {
   return (
@@ -480,6 +488,8 @@ function useScrollToBottom(
 
 export function ChatActions(props: {
   uploadImage: () => void;
+  uploadDocument: () => void;
+  pdfProcessing: boolean;
   setAttachImages: (images: ChatImage[]) => void;
   setUploading: (uploading: boolean) => void;
   scrollToBottom: () => void;
@@ -508,6 +518,11 @@ export function ChatActions(props: {
 
   return (
     <div className={styles["chat-input-actions"]}>
+      <ChatAction
+        onClick={props.uploadDocument}
+        text={Locale.Chat.InputActions.UploadDocument}
+        icon={props.pdfProcessing ? <LoadingButtonIcon /> : <PaperClipIcon />}
+      />
       {showUploadImage && (
         <ChatAction
           onClick={props.uploadImage}
@@ -612,6 +627,9 @@ function _Chat() {
   const navigate = useNavigate();
   const [attachImages, setAttachImages] = useState<ChatImage[]>([]);
   const [uploading, setUploading] = useState(false);
+  const pdfAttachment = session.documentAttachment ?? null;
+  const [isDraggingPdf, setIsDraggingPdf] = useState(false);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
   const [showEditPromptModal, setShowEditPromptModal] = useState(false);
   const webllm = useContext(WebLLMContext)!;
   const mlcllm = useContext(MLCLLMContext)!;
@@ -628,6 +646,12 @@ function _Chat() {
     !(llm?.isInitialized?.() ?? true),
   );
   const inputDisabled = !modelReady || modelLoading;
+  const pdfProcessing = pdfAttachment?.status === "processing";
+  const attachmentStatusClass = pdfAttachment
+    ? styles[
+        `attachment-chip-${pdfAttachment.status}` as keyof typeof styles
+      ] ?? ""
+    : "";
 
   const models = config.models;
 
@@ -698,6 +722,10 @@ function _Chat() {
 
   const onSubmit = (userInput: string) => {
     if (inputDisabled) return;
+    if (pdfProcessing) {
+      showToast("Please wait for PDF processing to finish.");
+      return;
+    }
     if (userInput.trim() === "") return;
 
     const matchCommand = chatCommands.match(userInput);
@@ -710,7 +738,7 @@ function _Chat() {
 
     if (isStreaming) return;
 
-    chatStore.onUserInput(userInput, llm, attachImages);
+    chatStore.onUserInput(userInput, llm, attachImages, documentContext);
     setAttachImages([]);
     localStorage.setItem(LAST_INPUT_KEY, userInput);
     setUserInput("");
@@ -906,7 +934,7 @@ function _Chat() {
     // resend the message
     const textContent = getMessageTextContent(userMessage);
     const images = getMessageImages(userMessage);
-    chatStore.onUserInput(textContent, llm, images);
+    chatStore.onUserInput(textContent, llm, images, documentContext);
     inputRef.current?.focus();
   };
 
@@ -1064,6 +1092,140 @@ function _Chat() {
     },
     [attachImages, chatStore],
   );
+
+  const documentContext = useMemo<DocumentContext | undefined>(() => {
+    if (!pdfAttachment || pdfAttachment.status !== "ready") return undefined;
+    if (!pdfAttachment.text) return undefined;
+    return {
+      name: pdfAttachment.name,
+      text: pdfAttachment.text,
+      stats: pdfAttachment.stats,
+    };
+  }, [pdfAttachment]);
+
+  const handlePdfFile = async (file: File) => {
+    const isPdf =
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf");
+
+    if (!isPdf) {
+      showToast("Please attach a PDF file.");
+      return;
+    }
+
+    if (file.size > DOCUMENT_UPLOAD_MAX_FILE_MB * 1024 * 1024) {
+      chatStore.updateCurrentSession((session) => {
+        session.documentAttachment = {
+          id: nanoid(),
+          name: file.name,
+          mime: file.type || "application/pdf",
+          size: file.size,
+          status: "error",
+          error: `File is too large. Max ${DOCUMENT_UPLOAD_MAX_FILE_MB}MB.`,
+          file,
+          sentToChat: false,
+        };
+      });
+      return;
+    }
+
+    const attachment: DocumentAttachment = {
+      id: nanoid(),
+      name: file.name,
+      mime: file.type || "application/pdf",
+      size: file.size,
+      status: "processing",
+      file,
+      sentToChat: false,
+    };
+
+    chatStore.updateCurrentSession((session) => {
+      session.documentAttachment = attachment;
+    });
+
+    try {
+      const result = await parsePdfFile(file, {
+        maxPages: DOCUMENT_UPLOAD_MAX_PAGES,
+        maxChars: DOCUMENT_UPLOAD_MAX_CHARS,
+        lowTextThreshold: DOCUMENT_UPLOAD_LOW_TEXT_THRESHOLD,
+      });
+
+      console.log("[PDF] Extract success", {
+        name: file.name,
+        pagesParsed: result.stats.pagesParsed,
+        totalPages: result.stats.totalPages,
+        charCount: result.stats.charCount,
+        truncated: result.stats.truncated,
+        lowText: result.lowText,
+        preview: result.text.slice(0, 200),
+      });
+
+      chatStore.updateCurrentSession((session) => {
+        const current = session.documentAttachment;
+        if (!current || current.id !== attachment.id) return;
+        session.documentAttachment = {
+          ...attachment,
+          status: "ready",
+          text: result.text,
+          stats: result.stats,
+          lowText: result.lowText,
+          sentToChat: false,
+        };
+      });
+    } catch (error: any) {
+      const message = error?.message || error?.toString?.() || "Parse failed";
+      chatStore.updateCurrentSession((session) => {
+        const current = session.documentAttachment;
+        if (!current || current.id !== attachment.id) return;
+        session.documentAttachment = {
+          ...attachment,
+          status: "error",
+          error: message,
+          sentToChat: false,
+        };
+      });
+    }
+  };
+
+  const openPdfPicker = () => {
+    if (pdfProcessing) {
+      showToast("Please wait for PDF processing to finish.");
+      return;
+    }
+    pdfInputRef.current?.click();
+  };
+
+  const onPdfInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handlePdfFile(file);
+    }
+    event.target.value = "";
+  };
+
+  const onPdfDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDraggingPdf(false);
+    if (pdfProcessing) {
+      showToast("Please wait for PDF processing to finish.");
+      return;
+    }
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      handlePdfFile(file);
+    }
+  };
+
+  const onPdfDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
+    if (!event.dataTransfer?.types?.includes("Files")) return;
+    event.preventDefault();
+    setIsDraggingPdf(true);
+  };
+
+  const onPdfDragLeave = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDraggingPdf(false);
+  };
 
   async function uploadImage() {
     const images: ChatImage[] = [];
@@ -1439,7 +1601,7 @@ function _Chat() {
           <div className={styles["model-download-banner"]}>
             <div className={styles["model-download-text"]}>
               {modelProgress ||
-                "Model not downloaded yet. Download to start chatting."}
+                "Model not loaded yet. load first to start chatting."}
             </div>
             <div className={styles["model-download-actions"]}>
               <IconButton
@@ -1458,6 +1620,8 @@ function _Chat() {
 
         <ChatActions
           uploadImage={uploadImage}
+          uploadDocument={openPdfPicker}
+          pdfProcessing={pdfProcessing}
           setAttachImages={setAttachImages}
           setUploading={setUploading}
           scrollToBottom={scrollToBottom}
@@ -1476,13 +1640,81 @@ function _Chat() {
             onSearch("");
           }}
         />
+        <input
+          ref={pdfInputRef}
+          type="file"
+          accept="application/pdf"
+          className={styles["pdf-input"]}
+          onChange={onPdfInputChange}
+        />
+        {pdfAttachment && !pdfAttachment.sentToChat && (
+          <div
+            className={`${styles["attachment-chip"]} ${attachmentStatusClass}`}
+          >
+            <div className={styles["attachment-chip-title"]}>
+              <PaperClipIcon />
+              <span className={styles["attachment-chip-name"]}>
+                {pdfAttachment.name}
+              </span>
+            </div>
+            <div className={styles["attachment-chip-meta"]}>
+              {pdfAttachment.status === "processing" && (
+                <>
+                  <LoadingIcon />
+                  <span>Processing...</span>
+                </>
+              )}
+              {pdfAttachment.status === "ready" && (
+                <>
+                  <span>Ready</span>
+                  {pdfAttachment.stats?.truncated && (
+                    <span>
+                      Using first {pdfAttachment.stats.pagesParsed} pages
+                    </span>
+                  )}
+                </>
+              )}
+              {pdfAttachment.status === "error" && (
+                <span>
+                  Could not read PDF
+                  {pdfAttachment.error ? `: ${pdfAttachment.error}` : ""}
+                </span>
+              )}
+            </div>
+            <div className={styles["attachment-chip-actions"]}>
+              {pdfAttachment.status === "error" && pdfAttachment.file && (
+                <button
+                  className={styles["attachment-chip-action"]}
+                  onClick={() => handlePdfFile(pdfAttachment.file!)}
+                >
+                  Retry
+                </button>
+              )}
+              {!pdfAttachment.sentToChat && (
+                <button
+                  className={styles["attachment-chip-action"]}
+                  onClick={() =>
+                    chatStore.updateCurrentSession(
+                      (session) => (session.documentAttachment = null),
+                    )
+                  }
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+        )}
         <label
           className={`${styles["chat-input-panel-inner"]} ${
             attachImages.length != 0
               ? styles["chat-input-panel-inner-attach"]
               : ""
-          }`}
+          } ${isDraggingPdf ? styles["chat-input-panel-inner-drop"] : ""}`}
           htmlFor="chat-input"
+          onDragOver={onPdfDragOver}
+          onDragLeave={onPdfDragLeave}
+          onDrop={onPdfDrop}
         >
           <textarea
             id="chat-input"
@@ -1544,7 +1776,7 @@ function _Chat() {
               className={styles["chat-input-send"]}
               type="primary"
               onClick={() => onSubmit(userInput)}
-              disabled={inputDisabled}
+              disabled={inputDisabled || pdfProcessing}
             />
           )}
         </label>

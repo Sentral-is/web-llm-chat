@@ -17,6 +17,7 @@ import { nanoid } from "nanoid";
 import { createPersistStore } from "../utils/store";
 import { ChatCompletionFinishReason, CompletionUsage } from "@mlc-ai/web-llm";
 import { ChatImage } from "../typing";
+import { DocumentAttachment, DocumentContext } from "../types/document";
 
 export type ChatMessage = RequestMessage & {
   date: string;
@@ -58,6 +59,7 @@ export interface ChatSession {
   isGenerating: boolean;
 
   template: Template;
+  documentAttachment?: DocumentAttachment | null;
 }
 
 export const DEFAULT_TOPIC = Locale.Store.DefaultTopic;
@@ -82,6 +84,7 @@ function createEmptySession(): ChatSession {
     isGenerating: false,
 
     template: createEmptyTemplate(),
+    documentAttachment: null,
   };
 }
 
@@ -125,6 +128,25 @@ function fillTemplateWith(input: string, modelConfig: ConfigType) {
   });
 
   return output;
+}
+
+function buildDocumentPrompt(context: DocumentContext) {
+  const truncatedNote = context.stats?.truncated
+    ? `\n[Note] The document text is truncated to ${context.stats.pagesParsed} pages.`
+    : "";
+
+  return [
+    "You are given a PDF document to answer the user's questions.",
+    `Document name: ${context.name}`,
+    truncatedNote,
+    "Document text:",
+    context.text,
+    "",
+    "You already have this document text; do NOT say you cannot access or read the file.",
+    "Answer using the document. If the answer is not in the document, say you cannot find it.",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 const DEFAULT_CHAT_STATE = {
@@ -280,7 +302,12 @@ export const useChatStore = createPersistStore(
         get().summarizeSession(llm);
       },
 
-      onUserInput(content: string, llm: LLMApi, attachImages?: ChatImage[]) {
+      onUserInput(
+        content: string,
+        llm: LLMApi,
+        attachImages?: ChatImage[],
+        documentContext?: DocumentContext,
+      ) {
         const modelConfig = useAppConfig.getState().modelConfig;
 
         const userContent = fillTemplateWith(content, useAppConfig.getState());
@@ -323,20 +350,74 @@ export const useChatStore = createPersistStore(
 
         // get recent messages
         const recentMessages = get().getMessagesWithMemory();
-        const sendMessages = recentMessages.concat(userMessage);
+        // The backend expects any system prompt to be the very first message.
+        // If we have document context, merge it into the first system message or
+        // prepend a new system message so ordering stays valid.
+        const documentSystemMessage = documentContext
+          ? createMessage({
+              role: "system",
+              content: buildDocumentPrompt(documentContext),
+            })
+          : null;
+
+        let sendMessages = recentMessages.concat(userMessage);
+        if (documentSystemMessage) {
+          const firstSystemIndex = sendMessages.findIndex(
+            (msg) => msg.role === "system",
+          );
+          if (firstSystemIndex >= 0) {
+            const systemMessage = sendMessages[firstSystemIndex];
+            sendMessages[firstSystemIndex] = {
+              ...systemMessage,
+              content: `${systemMessage.content}\n\n${documentSystemMessage.content}`,
+            };
+          } else {
+            sendMessages = [documentSystemMessage, ...sendMessages];
+          }
+        }
+
+        const docLen =
+          documentContext?.text?.length ??
+          documentSystemMessage?.content.length;
+        if (documentSystemMessage) {
+          console.log("[Chat] Document prompt attached", {
+            docChars: docLen,
+            docTruncated: documentContext?.stats?.truncated,
+            docPagesParsed: documentContext?.stats?.pagesParsed,
+            firstSystemPreview: documentSystemMessage.content.slice(0, 200),
+          });
+        } else {
+          console.log("[Chat] No document context to attach");
+        }
 
         log.debug("Messages: ", sendMessages);
 
         // save user's and bot's message
         get().updateCurrentSession((session) => {
+          const messagesToAppend: ChatMessage[] = [];
+
+          if (
+            documentContext &&
+            session.documentAttachment?.status === "ready" &&
+            !session.documentAttachment.sentToChat
+          ) {
+            messagesToAppend.push(
+              createMessage({
+                role: "user",
+                content: `[PDF] ${session.documentAttachment.name}`,
+                id: `document-${session.documentAttachment.id}`,
+              }),
+            );
+            session.documentAttachment.sentToChat = true;
+          }
+
           const savedUserMessage = {
             ...userMessage,
             content: mContent,
           };
-          session.messages = session.messages.concat([
-            savedUserMessage,
-            botMessage,
-          ]);
+          messagesToAppend.push(savedUserMessage, botMessage);
+
+          session.messages = session.messages.concat(messagesToAppend);
           session.isGenerating = true;
         });
 
@@ -688,18 +769,34 @@ export const useChatStore = createPersistStore(
   },
   {
     name: StoreKey.Chat,
-    version: 0.1,
+    version: 0.3,
     migrate(persistedState, version): any {
+      const store = persistedState as typeof DEFAULT_CHAT_STATE;
       if (version < 0.1) {
-        const store = persistedState as typeof DEFAULT_CHAT_STATE;
         store.sessions.forEach((s) => {
           s.messages.forEach((m) => {
             m.stopReason = "stop";
           });
         });
-        return store;
       }
-      return persistedState;
+      if (version < 0.2) {
+        store.sessions.forEach((s) => {
+          if (s.documentAttachment === undefined) {
+            s.documentAttachment = null;
+          }
+        });
+      }
+      if (version < 0.3) {
+        store.sessions.forEach((s) => {
+          if (
+            s.documentAttachment &&
+            s.documentAttachment.sentToChat === undefined
+          ) {
+            s.documentAttachment.sentToChat = false;
+          }
+        });
+      }
+      return store;
     },
   },
 );
