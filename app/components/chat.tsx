@@ -101,6 +101,7 @@ import { ChatImage } from "../typing";
 import ModelSelect from "./model-select";
 import { DocumentAttachment, DocumentContext } from "../types/document";
 import { parsePdfFile } from "../utils/pdf";
+import { parseDocxFile } from "../utils/docx";
 import { parseTextFile } from "../utils/text";
 import { nanoid } from "nanoid";
 
@@ -1112,18 +1113,32 @@ function _Chat() {
   const handleDocumentFile = async (file: File) => {
     const lowerName = file.name.toLowerCase();
     const isPdf = file.type === "application/pdf" || lowerName.endsWith(".pdf");
+    const isDocx =
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      lowerName.endsWith(".docx");
     const isText =
       file.type.startsWith("text/") ||
       lowerName.endsWith(".txt") ||
       (file.type === "application/octet-stream" && lowerName.endsWith(".txt"));
 
-    if (!isPdf && !isText) {
-      showToast("Please attach a PDF or TXT file.");
+    if (!isPdf && !isText && !isDocx) {
+      showToast("Please attach a PDF, TXT, or DOCX file.");
       return;
     }
 
-    const format: DocumentAttachment["format"] = isPdf ? "pdf" : "text";
-    const mime = file.type || (isPdf ? "application/pdf" : "text/plain");
+    const format: DocumentAttachment["format"] = isPdf
+      ? "pdf"
+      : isDocx
+        ? "docx"
+        : "text";
+    const mime =
+      file.type ||
+      (isPdf
+        ? "application/pdf"
+        : isDocx
+          ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          : "text/plain");
 
     if (file.size > DOCUMENT_UPLOAD_MAX_FILE_MB * 1024 * 1024) {
       chatStore.updateCurrentSession((session) => {
@@ -1164,10 +1179,15 @@ function _Chat() {
             maxChars: DOCUMENT_UPLOAD_MAX_CHARS,
             lowTextThreshold: DOCUMENT_UPLOAD_LOW_TEXT_THRESHOLD,
           })
-        : await parseTextFile(file, {
-            maxChars: DOCUMENT_UPLOAD_MAX_CHARS,
-            lowTextThreshold: DOCUMENT_UPLOAD_LOW_TEXT_THRESHOLD,
-          });
+        : isDocx
+          ? await parseDocxFile(file, {
+              maxChars: DOCUMENT_UPLOAD_MAX_CHARS,
+              lowTextThreshold: DOCUMENT_UPLOAD_LOW_TEXT_THRESHOLD,
+            })
+          : await parseTextFile(file, {
+              maxChars: DOCUMENT_UPLOAD_MAX_CHARS,
+              lowTextThreshold: DOCUMENT_UPLOAD_LOW_TEXT_THRESHOLD,
+            });
 
       console.log("[Document] Extract success", {
         name: file.name,
@@ -1665,7 +1685,7 @@ function _Chat() {
         <input
           ref={documentInputRef}
           type="file"
-          accept="application/pdf,text/plain,.txt"
+          accept="application/pdf,text/plain,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx"
           className={styles["pdf-input"]}
           onChange={onDocumentInputChange}
         />

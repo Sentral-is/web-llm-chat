@@ -140,9 +140,11 @@ function buildDocumentPrompt(context: DocumentContext) {
   const typeLabel =
     context.format === "pdf"
       ? "PDF document"
-      : context.format === "text"
-        ? "text document"
-        : "document";
+      : context.format === "docx"
+        ? "Word document"
+        : context.format === "text"
+          ? "text document"
+          : "document";
 
   return [
     `You are given a ${typeLabel} to answer the user's questions.`,
@@ -410,12 +412,15 @@ export const useChatStore = createPersistStore(
             session.documentAttachment?.status === "ready" &&
             !session.documentAttachment.sentToChat
           ) {
+            const format = session.documentAttachment.format;
             const docLabel =
-              session.documentAttachment.format === "text"
+              format === "text"
                 ? "TXT"
-                : session.documentAttachment.format === "pdf"
+                : format === "pdf"
                   ? "PDF"
-                  : "DOC";
+                  : format === "docx"
+                    ? "DOCX"
+                    : "DOC";
             messagesToAppend.push(
               createMessage({
                 role: "user",

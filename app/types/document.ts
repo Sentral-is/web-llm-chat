@@ -13,7 +13,7 @@ export type DocumentAttachment = {
   mime: string;
   size: number;
   status: DocumentStatus;
-  format?: "pdf" | "text";
+  format?: "pdf" | "text" | "docx";
   text?: string;
   stats?: DocumentStats;
   lowText?: boolean;
@@ -25,7 +25,7 @@ export type DocumentAttachment = {
 export type DocumentContext = {
   name: string;
   mime?: string;
-  format?: "pdf" | "text";
+  format?: "pdf" | "text" | "docx";
   text: string;
   stats?: DocumentStats;
 };
