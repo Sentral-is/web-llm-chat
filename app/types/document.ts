@@ -1,8 +1,8 @@
 export type DocumentStatus = "idle" | "processing" | "ready" | "error";
 
 export type DocumentStats = {
-  pagesParsed: number;
-  totalPages: number;
+  pagesParsed?: number;
+  totalPages?: number;
   charCount: number;
   truncated: boolean;
 };
@@ -13,6 +13,7 @@ export type DocumentAttachment = {
   mime: string;
   size: number;
   status: DocumentStatus;
+  format?: "pdf" | "text";
   text?: string;
   stats?: DocumentStats;
   lowText?: boolean;
@@ -23,6 +24,8 @@ export type DocumentAttachment = {
 
 export type DocumentContext = {
   name: string;
+  mime?: string;
+  format?: "pdf" | "text";
   text: string;
   stats?: DocumentStats;
 };

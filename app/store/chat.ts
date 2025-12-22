@@ -132,11 +132,20 @@ function fillTemplateWith(input: string, modelConfig: ConfigType) {
 
 function buildDocumentPrompt(context: DocumentContext) {
   const truncatedNote = context.stats?.truncated
-    ? `\n[Note] The document text is truncated to ${context.stats.pagesParsed} pages.`
+    ? context.stats.pagesParsed && context.stats.totalPages
+      ? `\n[Note] The document text is truncated to ${context.stats.pagesParsed} pages.`
+      : `\n[Note] The document text is truncated to ${context.stats.charCount} characters.`
     : "";
 
+  const typeLabel =
+    context.format === "pdf"
+      ? "PDF document"
+      : context.format === "text"
+        ? "text document"
+        : "document";
+
   return [
-    "You are given a PDF document to answer the user's questions.",
+    `You are given a ${typeLabel} to answer the user's questions.`,
     `Document name: ${context.name}`,
     truncatedNote,
     "Document text:",
@@ -401,10 +410,16 @@ export const useChatStore = createPersistStore(
             session.documentAttachment?.status === "ready" &&
             !session.documentAttachment.sentToChat
           ) {
+            const docLabel =
+              session.documentAttachment.format === "text"
+                ? "TXT"
+                : session.documentAttachment.format === "pdf"
+                  ? "PDF"
+                  : "DOC";
             messagesToAppend.push(
               createMessage({
                 role: "user",
-                content: `[PDF] ${session.documentAttachment.name}`,
+                content: `[${docLabel}] ${session.documentAttachment.name}`,
                 id: `document-${session.documentAttachment.id}`,
               }),
             );
