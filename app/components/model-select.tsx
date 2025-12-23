@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Cpu, Search } from "lucide-react";
-import ModelRow from "./model-row";
-import { modelDetailsList } from "../utils/model";
+import ModelGroupRow from "./model-group-row";
+import {
+  modelDetailsList,
+  enrichModelWithMetadata,
+  groupModelsByBaseName,
+  GroupedModel,
+} from "../utils/model";
 
 import style from "./model-select.module.scss";
 import { Modal } from "./ui-lib";
@@ -10,6 +15,7 @@ import Locale from "../locales";
 import { IconButton } from "./button";
 import { ModelFamily } from "../constant";
 import { Model, useAppConfig } from "../store";
+import { ModelRecord } from "../client/api";
 
 export interface ModelSearchProps {
   onClose: () => void;
@@ -64,18 +70,14 @@ const ModelSelect: React.FC<ModelSearchProps> = ({
 }) => {
   const config = useAppConfig();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredModels, setFilteredModels] = useState<[string, string[]][]>(
-    [],
-  );
+  const [filteredModels, setFilteredModels] = useState<GroupedModel[]>([]);
   const [selectedFamilies, setSelectedFamilies] = useState<string[]>([]);
-  const [expandedModels, setExpandedModels] = useState<Set<string>>(new Set());
 
   const determineModelIcon = (model: Model) => {
     const modelFamily = identifyModelFamily(model);
     const modelDetail = modelDetailsList.find(
       (md) => modelFamily && modelFamily === md.family,
     );
-    console.log(model, modelFamily, modelDetail);
     return (
       <div className={style["model-icon"]}>
         {modelDetail?.icon ? <modelDetail.icon /> : <Cpu />}
@@ -83,100 +85,81 @@ const ModelSelect: React.FC<ModelSearchProps> = ({
     );
   };
 
-  const identifyModelFamily = (model: Model): ModelFamily | null => {
-    return config.models.find((m) => m.name === model)?.family || null;
-  };
-
-  const extractModelDetails = (model: string) => {
-    const parts = model.split("-");
-    const displayName: string[] = [];
-    const quantBadges: string[] = [];
-    let isBadge = false;
-
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      if (isBadge || part.startsWith("q") || part.startsWith("b")) {
-        isBadge = true;
-        if (part !== "MLC") {
-          quantBadges.push(part);
-        }
-      } else {
-        displayName.push(part);
-      }
-    }
-
-    return {
-      displayName: displayName.join(" "),
-      quantBadge: quantBadges.length > 0 ? quantBadges.join("-") : null,
-    };
-  };
-
-  const sortAndGroupModels = useCallback(
-    (models: string[]): [string, string[]][] => {
-      const groupedModels: { [key: string]: string[] } = {};
-
-      for (const model of models) {
-        const { displayName } = extractModelDetails(model);
-        const family = identifyModelFamily(model);
-
-        if (family) {
-          if (!groupedModels[displayName]) {
-            groupedModels[displayName] = [];
-          }
-          groupedModels[displayName].push(model);
-        }
-      }
-
-      for (const key in groupedModels) {
-        groupedModels[key].sort((a, b) => a.localeCompare(b));
-      }
-
-      return Object.entries(groupedModels).sort(
-        ([, aVariants], [, bVariants]) => {
-          const familyA = identifyModelFamily(aVariants[0]) || "";
-          const familyB = identifyModelFamily(bVariants[0]) || "";
-          return familyA.localeCompare(familyB);
-        },
-      );
+  const identifyModelFamily = useCallback(
+    (model: Model): ModelFamily | null => {
+      return config.models.find((m) => m.name === model)?.family || null;
     },
-    [],
+    [config.models],
   );
 
-  const handleToggleExpand = (modelName: string) => {
-    setExpandedModels((prev) => {
-      const updatedSet = new Set<string>(prev);
-      if (updatedSet.has(modelName)) {
-        updatedSet.delete(modelName);
-      } else {
-        updatedSet.add(modelName);
-      }
-      return updatedSet;
-    });
-  };
+  const sortModels = useCallback(
+    (models: string[]): ModelRecord[] => {
+      // Enrich models with metadata
+      const enrichedModels = models
+        .map((modelName) => {
+          const modelRecord = config.models.find((m) => m.name === modelName);
+          if (!modelRecord) return null;
+          return enrichModelWithMetadata(modelRecord);
+        })
+        .filter((m) => m !== null) as ModelRecord[];
+
+      // Sort by:
+      // 1. Benchmark score (descending)
+      // 2. Then alphabetically
+      return enrichedModels.sort((a, b) => {
+        // Sort by benchmark score (higher first)
+        if (
+          a.benchmark_score !== undefined &&
+          b.benchmark_score !== undefined
+        ) {
+          if (a.benchmark_score !== b.benchmark_score) {
+            return b.benchmark_score - a.benchmark_score;
+          }
+        }
+        if (a.benchmark_score !== undefined && b.benchmark_score === undefined)
+          return -1;
+        if (a.benchmark_score === undefined && b.benchmark_score !== undefined)
+          return 1;
+
+        // Finally alphabetically
+        return a.display_name.localeCompare(b.display_name);
+      });
+    },
+    [config.models],
+  );
 
   useEffect(() => {
-    const sortedModels = sortAndGroupModels(availableModels);
+    const sortedModels = sortModels(availableModels);
 
     let filtered = sortedModels;
 
     if (searchTerm) {
       const lowerSearchTerm = searchTerm.toLowerCase();
       filtered = sortedModels.filter(
-        ([baseModel, variants]) =>
-          baseModel.toLowerCase().includes(lowerSearchTerm) ||
-          variants.some((v) => v.toLowerCase().includes(lowerSearchTerm)),
+        (model) =>
+          model.display_name?.toLowerCase().includes(lowerSearchTerm) ||
+          model.name.toLowerCase().includes(lowerSearchTerm),
       );
     }
 
     if (selectedFamilies.length > 0) {
-      filtered = filtered.filter(([, variants]) => {
-        const family = identifyModelFamily(variants[0]);
+      filtered = filtered.filter((model) => {
+        const family = identifyModelFamily(model.name);
         return family && selectedFamilies.includes(family);
       });
     }
 
-    setFilteredModels(filtered);
-  }, [searchTerm, availableModels, selectedFamilies, sortAndGroupModels]);
+    // Group models by base name
+    const groupedModels = groupModelsByBaseName(filtered);
+
+    setFilteredModels(groupedModels);
+  }, [
+    searchTerm,
+    availableModels,
+    selectedFamilies,
+    sortModels,
+    identifyModelFamily,
+  ]);
 
   const handleToggleFamilyFilter = (family: string) => {
     setSelectedFamilies((prev) =>
@@ -193,19 +176,6 @@ const ModelSelect: React.FC<ModelSearchProps> = ({
       searchInputRef.current?.focus();
     }, 0);
   }, []);
-
-  const countModelsPerFamily = (
-    models: string[],
-  ): { [key: string]: number } => {
-    const counts: { [key: string]: number } = {};
-    for (const model of models) {
-      const family = identifyModelFamily(model);
-      if (family) {
-        counts[family] = (counts[family] || 0) + 1;
-      }
-    }
-    return counts;
-  };
 
   return (
     <div className="screen-model-container">
@@ -236,17 +206,13 @@ const ModelSelect: React.FC<ModelSearchProps> = ({
           </div>
         </div>
         <div className={style["model-list"]}>
-          {filteredModels.map((model) => (
-            <ModelRow
-              key={model[0]}
-              baseModel={model[0]}
-              variants={model[1]}
-              isExpanded={expandedModels.has(model[0])}
+          {filteredModels.map((groupedModel) => (
+            <ModelGroupRow
+              key={groupedModel.baseName}
+              groupedModel={groupedModel}
               determineModelIcon={determineModelIcon}
-              extractModelDetails={extractModelDetails}
               onSelectModel={onSelectModel}
               onClose={onClose}
-              handleToggleExpand={handleToggleExpand}
             />
           ))}
         </div>

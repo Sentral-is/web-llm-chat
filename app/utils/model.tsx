@@ -8,6 +8,147 @@ import DeepSeekIcon from "@/app/icons/deepseek.svg";
 import { ModelRecord } from "../client/api";
 import { ModelFamily } from "../constant";
 import { Shirt, WandSparkles } from "lucide-react";
+import { getSize } from "../utils";
+
+/**
+ * Derive size category from model parameter count or parsed size
+ */
+function getSizeCategory(
+  parameter: number | undefined,
+  size: string | undefined,
+):
+  | "Small (<3B)"
+  | "Standard (3-7B)"
+  | "Medium (7-30B)"
+  | "Large (30B+)"
+  | undefined {
+  // Use parameter field if available
+  if (parameter !== undefined) {
+    if (parameter < 3) return "Small (<3B)";
+    if (parameter >= 3 && parameter < 7) return "Standard (3-7B)";
+    if (parameter >= 7 && parameter < 30) return "Medium (7-30B)";
+    return "Large (30B+)";
+  }
+
+  // Fallback to parsing size string
+  if (!size) return undefined;
+
+  const numericSize = parseFloat(size);
+  const unit = size.toUpperCase().slice(-1);
+
+  // Convert to billions for comparison
+  const sizeInB = unit === "K" ? numericSize / 1000 : numericSize;
+
+  if (sizeInB < 3) return "Small (<3B)";
+  if (sizeInB >= 3 && sizeInB < 7) return "Standard (3-7B)";
+  if (sizeInB >= 7 && sizeInB < 30) return "Medium (7-30B)";
+  return "Large (30B+)";
+}
+
+/**
+ * Extract base model name (without quantization and MLC suffix)
+ */
+export function getBaseModelName(modelName: string): string {
+  // Remove quantization patterns like -q4f16_1, -q4f32_1, -q0f16, etc.
+  // Also remove -MLC suffix and context window suffix like -1k
+  return modelName
+    .replace(/-q\d+f\d+(_\d+)?/i, "")
+    .replace(/-MLC(-\d+k)?$/i, "");
+}
+
+/**
+ * Extract quantization from model name
+ */
+export function getQuantization(modelName: string): string | undefined {
+  const match = modelName.match(/-(q\d+f\d+(_\d+)?)/i);
+  return match ? match[1] : undefined;
+}
+
+/**
+ * Format model name for display
+ * Removes MLC suffix, context window suffix, and formats parts appropriately
+ */
+export function formatModelName(modelName: string): string {
+  // Remove "-MLC" suffix and context window suffix (e.g., "-1k")
+  let formatted = modelName.replace(/-MLC(-\d+k)?$/i, "");
+
+  // Replace hyphens with spaces and capitalize, but preserve quantization format
+  formatted = formatted
+    .split("-")
+    .map((part) => {
+      // Keep version numbers as-is (like 3.5, 3.1, etc)
+      if (/^\d+(\.\d+)?$/.test(part)) return part;
+      // Keep quantization patterns as-is, but remove trailing _1
+      if (/^q\d+f\d+(_\d+)?$/i.test(part)) return part.replace(/_\d+$/, "");
+      // Keep size indicators as-is (70B, 8B, 4B, etc)
+      if (/^\d+[BK]$/i.test(part)) return part.toUpperCase();
+      // Capitalize first letter for everything else (including "Instruct")
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    })
+    .join(" ");
+
+  return formatted;
+}
+
+/**
+ * Group models by base name
+ */
+export interface GroupedModel {
+  baseName: string;
+  displayName: string;
+  models: ModelRecord[];
+  // Shared properties from the first model in the group
+  family: string;
+  benchmark_score?: number;
+  size_category?:
+    | "Small (<3B)"
+    | "Standard (3-7B)"
+    | "Medium (7-30B)"
+    | "Large (30B+)";
+  file_size?: string;
+}
+
+export function groupModelsByBaseName(models: ModelRecord[]): GroupedModel[] {
+  const groups = new Map<string, ModelRecord[]>();
+
+  // Group models by base name
+  models.forEach((model) => {
+    const baseName = getBaseModelName(model.name);
+    if (!groups.has(baseName)) {
+      groups.set(baseName, []);
+    }
+    groups.get(baseName)!.push(model);
+  });
+
+  // Convert to GroupedModel array
+  return Array.from(groups.entries()).map(([baseName, groupModels]) => {
+    const firstModel = groupModels[0];
+    return {
+      baseName,
+      displayName: firstModel.display_name,
+      models: groupModels,
+      family: firstModel.family,
+      benchmark_score: firstModel.benchmark_score,
+      size_category: firstModel.size_category,
+      file_size: firstModel.file_size,
+    };
+  });
+}
+
+/**
+ * Enrich model with metadata derived from the model record
+ */
+export function enrichModelWithMetadata(model: ModelRecord): ModelRecord {
+  const sizeCategory = getSizeCategory(model.parameter, model.size);
+  // Use actual file_size from model data if available
+  const fileSize = model.file_size || "0";
+
+  return {
+    ...model,
+    size_category: sizeCategory,
+    file_size: fileSize,
+  };
+}
 
 export function collectModelTable(
   models: readonly ModelRecord[],
@@ -72,7 +213,7 @@ export interface ModelDetails {
 
 export const modelDetailsList: ModelDetails[] = [
   { family: ModelFamily.LLAMA, name: "Llama", icon: MetaIcon },
-  { family: ModelFamily.DEEPSEEK, name: "DeepSeek", icon: DeepSeekIcon },
+  // { family: ModelFamily.DEEPSEEK, name: "DeepSeek", icon: DeepSeekIcon },
   {
     family: ModelFamily.QWEN,
     name: "Qwen",
@@ -88,5 +229,5 @@ export const modelDetailsList: ModelDetails[] = [
   },
   { family: ModelFamily.STABLE_LM, name: "StableLM", icon: StablelmIcon },
   { family: ModelFamily.REDPAJAMA, name: "RedPajama", icon: Shirt },
-  { family: ModelFamily.WIZARD_MATH, name: "Wizard Math", icon: WandSparkles },
+  // { family: ModelFamily.WIZARD_MATH, name: "Wizard Math", icon: WandSparkles },
 ];

@@ -61,6 +61,14 @@ export interface ModelRecord {
   size?: string;
   quantization?: string;
   family: ModelFamily;
+  benchmark_score?: number;
+  size_category?:
+    | "Small (<3B)"
+    | "Standard (3-7B)"
+    | "Medium (7-30B)"
+    | "Large (30B+)";
+  parameter?: number;
+  file_size?: string;
   recommended_config?: {
     temperature?: number;
     context_window_size?: number;
