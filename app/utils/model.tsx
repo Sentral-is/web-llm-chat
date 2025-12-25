@@ -4,11 +4,12 @@ import MicrosoftIcon from "@/app/icons/microsoft.svg";
 import MistralIcon from "@/app/icons/mistral.svg";
 import GoogleIcon from "@/app/icons/google.svg";
 import StablelmIcon from "@/app/icons/stablelm.svg";
-import DeepSeekIcon from "@/app/icons/deepseek.svg";
+// import DeepSeekIcon from "@/app/icons/deepseek.svg";
 import { ModelRecord } from "../client/api";
 import { ModelFamily } from "../constant";
-import { Shirt, WandSparkles } from "lucide-react";
-import { getSize } from "../utils";
+import { Shirt } from "lucide-react";
+// import { getSize } from "../utils";
+import { prebuiltAppConfig } from "@mlc-ai/web-llm";
 
 /**
  * Derive size category from model parameter count or parsed size
@@ -91,6 +92,51 @@ export function formatModelName(modelName: string): string {
 }
 
 /**
+ * Get friendly variant label based on quantization and context window
+ */
+export function getVariantLabel(
+  modelName: string,
+  contextWindow?: number,
+): string {
+  const quant = getQuantization(modelName);
+
+  // Check if model has -1k suffix OR 1024 context window
+  const hasLowResourceSuffix = modelName.includes("-1k");
+
+  // Only consider it "Low Resource" if it has 1K context window
+  if (hasLowResourceSuffix || contextWindow === 1024) {
+    return "Low Resource";
+  }
+
+  if (quant?.includes("f32")) {
+    return "High Precision";
+  }
+
+  return "Standard";
+}
+
+/**
+ * Format VRAM in MB to human-readable GB string
+ */
+export function formatVRAM(vramMB?: number): string | undefined {
+  if (!vramMB) return undefined;
+  return `${(vramMB / 1024).toFixed(1)} GB`;
+}
+
+/**
+ * Format context window size to human-readable string
+ */
+export function formatContextWindow(contextSize?: number): string | undefined {
+  if (!contextSize) return undefined;
+
+  if (contextSize >= 1024) {
+    return `${(contextSize / 1024).toFixed(0)}K`;
+  }
+
+  return `${contextSize}`;
+}
+
+/**
  * Group models by base name
  */
 export interface GroupedModel {
@@ -136,17 +182,23 @@ export function groupModelsByBaseName(models: ModelRecord[]): GroupedModel[] {
 }
 
 /**
- * Enrich model with metadata derived from the model record
+ * Enrich model with metadata derived from the model record and WebLLM config
  */
 export function enrichModelWithMetadata(model: ModelRecord): ModelRecord {
   const sizeCategory = getSizeCategory(model.parameter, model.size);
-  // Use actual file_size from model data if available
-  const fileSize = model.file_size || "0";
+
+  // Try to find matching model in WebLLM prebuilt config
+  const webllmModel = prebuiltAppConfig.model_list.find(
+    (m) => m.model_id === model.name,
+  );
 
   return {
     ...model,
     size_category: sizeCategory,
-    file_size: fileSize,
+    // Merge WebLLM config data if available to get VRAM and context window
+    vram_required_MB: model.vram_required_MB ?? webllmModel?.vram_required_MB,
+    context_window_size:
+      model.context_window_size ?? webllmModel?.overrides?.context_window_size,
   };
 }
 

@@ -69,6 +69,8 @@ export interface ModelRecord {
     | "Large (30B+)";
   parameter?: number;
   file_size?: string;
+  vram_required_MB?: number;
+  context_window_size?: number;
   recommended_config?: {
     temperature?: number;
     context_window_size?: number;

@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import { Model, useAppConfig } from "../store";
 import style from "./model-row.module.scss";
-import { GroupedModel, getQuantization, formatModelName } from "../utils/model";
+import {
+  GroupedModel,
+  getQuantization,
+  formatModelName,
+  getVariantLabel,
+  formatVRAM,
+  formatContextWindow,
+} from "../utils/model";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 interface ModelGroupRowProps {
@@ -105,6 +112,14 @@ const ModelGroupRow: React.FC<ModelGroupRowProps> = ({
           {groupedModel.models.map((model) => {
             const isSelected = config.modelConfig.model === model.name;
             const quantization = getQuantization(model.name);
+            const variantLabel = getVariantLabel(
+              model.name,
+              model.context_window_size,
+            );
+            const vramDisplay = formatVRAM(model.vram_required_MB);
+            const contextDisplay = formatContextWindow(
+              model.context_window_size,
+            );
 
             return (
               <div
@@ -112,12 +127,33 @@ const ModelGroupRow: React.FC<ModelGroupRowProps> = ({
                 className={`${style["variant-item"]} ${isSelected ? style["selected-variant"] : ""}`}
                 onClick={(e) => handleVariantClick(e, model.name)}
               >
-                <span className={style["variant-name"]}>
-                  {quantization?.toUpperCase()}
-                </span>
-                {isSelected && (
-                  <span className={style["selected-indicator"]}>✓</span>
-                )}
+                <div className={style["variant-badge"]}>
+                  {quantization?.toUpperCase().replace(/_\d+$/, "")}
+                </div>
+                <div className={style["variant-content"]}>
+                  <div className={style["variant-header"]}>
+                    <span className={style["variant-label"]}>
+                      {variantLabel}
+                    </span>
+                    {isSelected && (
+                      <span className={style["selected-indicator"]}>✓</span>
+                    )}
+                  </div>
+                  <div className={style["variant-tags"]}>
+                    {vramDisplay && (
+                      <span className={`${style["tag"]} ${style["tag-vram"]}`}>
+                        {vramDisplay} VRAM
+                      </span>
+                    )}
+                    {contextDisplay && (
+                      <span
+                        className={`${style["tag"]} ${style["tag-context"]}`}
+                      >
+                        {contextDisplay} context
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
             );
           })}
