@@ -9,7 +9,7 @@ import {
   formatVRAM,
   formatContextWindow,
 } from "../utils/model";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Check } from "lucide-react";
 
 interface ModelGroupRowProps {
   groupedModel: GroupedModel;
@@ -135,9 +135,6 @@ const ModelGroupRow: React.FC<ModelGroupRowProps> = ({
                     <span className={style["variant-label"]}>
                       {variantLabel}
                     </span>
-                    {isSelected && (
-                      <span className={style["selected-indicator"]}>✓</span>
-                    )}
                   </div>
                   <div className={style["variant-tags"]}>
                     {vramDisplay && (
@@ -154,6 +151,11 @@ const ModelGroupRow: React.FC<ModelGroupRowProps> = ({
                     )}
                   </div>
                 </div>
+                {isSelected && (
+                  <span className={style["selected-indicator"]}>
+                    <Check size={24} />
+                  </span>
+                )}
               </div>
             );
           })}
