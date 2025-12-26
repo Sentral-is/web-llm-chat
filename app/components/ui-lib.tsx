@@ -7,8 +7,6 @@ import EyeOffIcon from "../icons/eye-off.svg";
 import DownIcon from "../icons/down.svg";
 import ConfirmIcon from "../icons/confirm.svg";
 import CancelIcon from "../icons/cancel.svg";
-import MaxIcon from "../icons/max.svg";
-import MinIcon from "../icons/min.svg";
 
 import Locale from "../locales";
 
@@ -141,7 +139,9 @@ interface ModalProps {
   defaultMax?: boolean;
   footer?: React.ReactNode;
   onClose?: () => void;
+  disableBackdropClick?: boolean;
 }
+
 export function Modal(props: ModalProps) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -158,46 +158,44 @@ export function Modal(props: ModalProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const [isMax, setMax] = useState(!!props.defaultMax);
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (props.disableBackdropClick) return;
+    if (e.target === e.currentTarget) {
+      props.onClose?.();
+    }
+  };
 
   return (
-    <div
-      className={
-        styles["modal-container"] + ` ${isMax && styles["modal-container-max"]}`
-      }
-    >
-      <div className={styles["modal-header"]}>
-        <div className={styles["modal-title"]}>{props.title}</div>
+    <>
+      <div className={styles["modal-backdrop"]} onClick={handleBackdropClick} />
+      <div className={styles["modal-container"]}>
+        <div className={styles["modal-header"]}>
+          <div className={styles["modal-title"]}>{props.title}</div>
 
-        <div className={styles["modal-header-actions"]}>
-          <div
-            className={styles["modal-header-action"]}
-            onClick={() => setMax(!isMax)}
-          >
-            {isMax ? <MinIcon /> : <MaxIcon />}
-          </div>
-          <div
-            className={styles["modal-header-action"]}
-            onClick={props.onClose}
-          >
-            <CloseIcon />
-          </div>
-        </div>
-      </div>
-
-      <div className={styles["modal-content"]}>{props.children}</div>
-
-      <div className={styles["modal-footer"]}>
-        {props.footer}
-        <div className={styles["modal-actions"]}>
-          {props.actions?.map((action, i) => (
-            <div key={i} className={styles["modal-action"]}>
-              {action}
+          <div className={styles["modal-header-actions"]}>
+            <div
+              className={styles["modal-header-action"]}
+              onClick={props.onClose}
+            >
+              <CloseIcon />
             </div>
-          ))}
+          </div>
+        </div>
+
+        <div className={styles["modal-content"]}>{props.children}</div>
+
+        <div className={styles["modal-footer"]}>
+          {props.footer}
+          <div className={styles["modal-actions"]}>
+            {props.actions?.map((action, i) => (
+              <div key={i} className={styles["modal-action"]}>
+                {action}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
