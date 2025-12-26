@@ -6,6 +6,7 @@
   border: 1px solid color-mix(in srgb, var(--primary) 15%, transparent 85%);
   border-radius: 12px;
   padding: 1rem;
+  margin: 0.2rem;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   background: linear-gradient(135deg,
@@ -153,7 +154,7 @@
   color: var(--light-gray);
 }
 
-.size-category {
+.parameter-size {
   color: var(--light-gray);
 }
 

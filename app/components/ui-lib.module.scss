@@ -209,11 +209,24 @@
     background: color-mix(in srgb, var(--white) 95%, var(--primary) 5%);
     backdrop-filter: blur(10px);
 
+    .modal-title-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
     .modal-title {
       font-weight: 600;
       font-size: 18px;
       color: var(--black);
       letter-spacing: -0.01em;
+    }
+
+    .modal-subtitle {
+      font-weight: 400;
+      font-size: 13px;
+      color: var(--light-gray);
+      letter-spacing: -0.005em;
     }
 
     .modal-header-actions {

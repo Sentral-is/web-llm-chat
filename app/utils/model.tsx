@@ -91,6 +91,32 @@ export function formatModelName(modelName: string): string {
   return formatted;
 }
 
+function formatParameterNumber(parameter: number): string {
+  const formatted = Number.isInteger(parameter)
+    ? parameter.toString()
+    : parameter.toFixed(1).replace(/\.0$/, "");
+  return `${formatted}B`;
+}
+
+/**
+ * Format model parameter size for display.
+ */
+export function formatParameterSize(
+  parameter?: number,
+  size?: string,
+): string | undefined {
+  if (parameter !== undefined) {
+    return `${formatParameterNumber(parameter)} params`;
+  }
+
+  if (!size) return undefined;
+
+  const normalized = size.trim();
+  if (!normalized) return undefined;
+
+  return `${normalized.toUpperCase()} params`;
+}
+
 /**
  * Get friendly variant label based on quantization and context window
  */

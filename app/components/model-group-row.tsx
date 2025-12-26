@@ -8,6 +8,7 @@ import {
   getVariantLabel,
   formatVRAM,
   formatContextWindow,
+  formatParameterSize,
 } from "../utils/model";
 import { ChevronDown, ChevronRight, Check } from "lucide-react";
 
@@ -50,6 +51,10 @@ const ModelGroupRow: React.FC<ModelGroupRowProps> = ({
   };
 
   const formattedBaseName = formatModelName(groupedModel.baseName);
+  const parameterSize = formatParameterSize(
+    groupedModel.models[0]?.parameter,
+    groupedModel.models[0]?.size,
+  );
 
   return (
     <div className={style["model-group"]}>
@@ -75,11 +80,11 @@ const ModelGroupRow: React.FC<ModelGroupRowProps> = ({
                     {groupedModel.file_size}
                   </span>
                 )}
-                {groupedModel.size_category && (
+                {parameterSize && (
                   <>
                     <span className={style["separator"]}>•</span>
-                    <span className={style["size-category"]}>
-                      {groupedModel.size_category}
+                    <span className={style["parameter-size"]}>
+                      {parameterSize}
                     </span>
                   </>
                 )}

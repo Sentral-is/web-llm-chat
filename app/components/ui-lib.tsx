@@ -134,12 +134,15 @@ export function Loading() {
 
 interface ModalProps {
   title: string;
+  subtitle?: string;
   children?: any;
   actions?: React.ReactNode[];
   defaultMax?: boolean;
   footer?: React.ReactNode;
   onClose?: () => void;
   disableBackdropClick?: boolean;
+  contentClassName?: string;
+  containerClassName?: string;
 }
 
 export function Modal(props: ModalProps) {
@@ -168,9 +171,16 @@ export function Modal(props: ModalProps) {
   return (
     <>
       <div className={styles["modal-backdrop"]} onClick={handleBackdropClick} />
-      <div className={styles["modal-container"]}>
+      <div
+        className={`${styles["modal-container"]} ${props.containerClassName ?? ""}`}
+      >
         <div className={styles["modal-header"]}>
-          <div className={styles["modal-title"]}>{props.title}</div>
+          <div className={styles["modal-title-container"]}>
+            <div className={styles["modal-title"]}>{props.title}</div>
+            {props.subtitle && (
+              <div className={styles["modal-subtitle"]}>{props.subtitle}</div>
+            )}
+          </div>
 
           <div className={styles["modal-header-actions"]}>
             <div
@@ -182,18 +192,24 @@ export function Modal(props: ModalProps) {
           </div>
         </div>
 
-        <div className={styles["modal-content"]}>{props.children}</div>
-
-        <div className={styles["modal-footer"]}>
-          {props.footer}
-          <div className={styles["modal-actions"]}>
-            {props.actions?.map((action, i) => (
-              <div key={i} className={styles["modal-action"]}>
-                {action}
-              </div>
-            ))}
-          </div>
+        <div
+          className={`${styles["modal-content"]} ${props.contentClassName ?? ""}`}
+        >
+          {props.children}
         </div>
+
+        {props.footer && (
+          <div className={styles["modal-footer"]}>
+            {props.footer}
+            <div className={styles["modal-actions"]}>
+              {props.actions?.map((action, i) => (
+                <div key={i} className={styles["modal-action"]}>
+                  {action}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
