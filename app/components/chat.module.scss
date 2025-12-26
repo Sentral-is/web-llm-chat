@@ -2,7 +2,7 @@
 
 .chat {
   position: relative;
-  background-image: url("/bg-gradient.png");
+  background-image: var(--chat-bg-image, url("/bg-gradient.png"));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -12,12 +12,12 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(12, 17, 35, var(--chat-bg-overlay, 0.5));
+    background: var(--chat-bg-overlay-color, rgba(12, 17, 35, 0.5));
     pointer-events: none;
     z-index: 0;
   }
 
-  > * {
+  >* {
     position: relative;
     z-index: 1;
   }
@@ -552,8 +552,8 @@
   max-width: 100%;
   margin-top: 10px;
   border-radius: 10px;
-  background-color: rgba(12, 17, 35, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background-color: var(--chat-message-bg, rgba(12, 17, 35, 0.55));
+  border: var(--chat-message-border, 1px solid rgba(255, 255, 255, 0.14));
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   padding: 10px;
@@ -565,8 +565,8 @@
 }
 
 .model-download-banner {
-  background: rgba(12, 17, 35, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--chat-message-bg, rgba(12, 17, 35, 0.7));
+  border: var(--chat-message-border, 1px solid rgba(255, 255, 255, 0.12));
   border-radius: 12px;
   padding: 12px 16px;
   margin: 12px 10px 30px 10px;

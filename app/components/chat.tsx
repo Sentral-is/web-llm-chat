@@ -1315,11 +1315,7 @@ function _Chat() {
   }
 
   return (
-    <div
-      className={styles.chat}
-      key={session.id}
-      style={{ "--chat-bg-overlay": "0.45" } as CSSProperties}
-    >
+    <div className={styles.chat} key={session.id}>
       <div className="window-header">
         {isMobileScreen && (
           <div className="window-actions">

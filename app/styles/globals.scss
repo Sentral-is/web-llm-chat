@@ -27,6 +27,12 @@
   /* stroke */
   --border-in-light: 1px solid #e9d5ff;                 /* Border */
   --border-in-dark: 1px solid rgba(11, 15, 25, 0.20);   /* fallback */
+
+  /* chat specific */
+  --chat-bg-image: url("/bg-gradient-light.jpg");
+  --chat-bg-overlay-color: rgba(255, 255, 255, 0.45);
+  --chat-message-bg: rgba(255, 255, 255, 0.65);
+  --chat-message-border: 1px solid rgba(124, 58, 237, 0.14);
 }
 
 @mixin dark {
@@ -50,6 +56,12 @@
   /* stroke */
   --border-in-light: 1px solid rgba(233, 213, 255, 0.18);
   --border-in-dark: 1px solid rgba(233, 213, 255, 0.34);
+
+  /* chat specific */
+  --chat-bg-image: url("/bg-gradient.png");
+  --chat-bg-overlay-color: rgba(12, 17, 35, 0.5);
+  --chat-message-bg: rgba(12, 17, 35, 0.55);
+  --chat-message-border: 1px solid rgba(255, 255, 255, 0.14);
 
   /* keep this if you still need it for legacy icons */
   div:not(.no-dark) > svg {
